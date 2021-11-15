@@ -1,14 +1,14 @@
 ---
-title: "My Final Project Template"
+title: "My Final Project First draft"
 author: Hui Gao
 subtitle: Subtitle here if desired
 ---
 
 # Introduction
 
-[~ 200 words]
+Jakobshavn Isbrae, one of the largest tidewater glaciers in Greenland, has been exhibiting complex spatiotemporal behaviors. After ~20 years of acceleration, retreating, and thinning, it started to decelerate, readvance, and thicken beginning in 2016. The acceleration and retreat resumed in 2019. Understanding the driving mechanisms of these changes, especially the reversal in 2016, is essential to predict its future contribution to sea-level rise under different scenarios of climate change.
 
-Clearly stated background and questions / hypotheses / problems being addressed. Sets up the analysis in an interesting and compelling way.
+Previous studies found that decreased submarine melt and extended existence of rigid melange as a result of ocean cooling near the terminus are strong candidates for causing the reversal. However, the roles of the subglacial drainage system and the atmospheric temperature remain elusive. This project aims to compare the relationships of ice surface velocity with the subglacial drainage system and air temperature to quantify their impact on the short reversal of Jakobshavn Isbrae in 2016. 
 
 # Materials and methods
 
@@ -34,42 +34,137 @@ You can do numbers like this:
 
 See [http://rmarkdown.rstudio.com/](http://rmarkdown.rstudio.com/) for all the amazing things you can do.
 
-
-Here's my first code chunk.
-```{r}
-1+2
-```
-
-Load any required packages in a code chunk (you may need to install some packages):
-
+## Load packages
 ```{r, message=F, warning=F}
 library(tidyverse)
+library(raster)
+library(rasterVis)
+library(rgdal)
+library(sf)
+library(spData)
+library(ncdf4)
+library(readxl)
+library(stats)
+library(lubridate)
 library(leaflet)
-library(kableExtra)
-knitr::opts_chunk$set(cache=TRUE)  # cache the results for quick compiling
+library(httr)
+library(jsonlite)
 ```
 
 ## Download and clean all required data
+```{r, eval=FALSE}
+## Get and download the velocity Data frrom NSIDC
+
+# The data has been downloaded to the data directory, to use the api, use your Your_EarthData_taken that can be aquired at https://nsidc.org/support/how/how-request-earthdata-login-token
+url = paste0("https://n5eil02u.ecs.nsidc.org/egi/request?short_name=NSIDC-0481&token=",
+             Your_EarthData_taken,
+             "&email=yes&version=2&time=2016-01-01T00:00:00,2016-12-31T00:00:00&bounding_box=-52.5,68.8,-47.5,69.5&agent=NO&INCLUDE_META=N&page_size=200&page_num=1")
+data = GET(url)
+
+# Download and save data locally
+dir.create("data")
+file_vel = file(file.path("data", "nsidc0481_16.zip"), "wb") 
+writeBin(data$content, file_vel)
+close(file_vel)
+
+# Unzip file
+data_dir = "data/nsidc0481_16"
+dir.create(data_dir)
+unzip("data/nsidc0481_16.zip", exdir = data_dir)
+```
+
 ```{r}
-n=20
-data=data.frame(x=runif(n,-180,180),
-                y=runif(n,-60,60),
-                size = runif(n, 5, 20),
-                category = factor(
-                  sample(letters[1:5], n, replace = TRUE)
-                  ),
-                value = rnorm(n))
+## Clean velocity data and read them into Rstudio
+
+data_dir = "data/nsidc0481_16"
+names = dir(data_dir, pattern = "^.*vv.*$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
+names = gsub("^.*68.6.*$", "", names)
+names = names[names != ""]
+stack_velRaster = stack(names)
+
+# Set date as the Z dimension
+date = substr(names, 41, 47)
+date = as.Date(format(as.POSIXct(date, format = '%d%b%Y'), "20%y-%m-%d"))
+stack_velRaster = setZ(stack_velRaster, date)
 ```
 
-```{r, results='asis'}
-data %>% 
-  slice(1:10) %>% #show only 1:n rows
-  kable(digits=2,align="c")%>% #make table and round to two digits
-  kable_styling(bootstrap_options = 
-                  c("striped", "hover", "condensed", "responsive")) #apply other formatting
+```{r, message=F, warning=F}
+## Extract time series of velocity at six example locations
+
+pts_coord = read_excel("data/Selected_pts.xlsx")
+pts = SpatialPoints(data.frame(x=pts_coord$X,y=pts_coord$Y))
+projection(pts) = crs(stack_velRaster)
+
+vel = raster::extract(stack_velRaster, pts, buffer=100, fun=mean, na.rm=T)
+veldf = as.data.frame(t(vel))
+veldf$Date = date
+rownames(veldf) <- NULL
+veldf = veldf %>%
+  arrange(date)
 ```
 
-Add any additional processing steps here.
+```{r}
+## Read runoff data and resample to the index of velocity time series
+
+runoff = read_excel("data/runoff_sum_abl.xlsx")
+runoff_16 = runoff[year(runoff$Date) == 2016,] %>%
+  mutate(Date = as.Date(Date))
+
+# resampling
+runoff_interp = as.data.frame(approx(runoff_16$Date,runoff_16$runoff_sum_abl, xout = veldf$Date, 
+       rule = 1, method = "linear", ties = mean)) %>%
+  rename(Date = "x", runoff = "y")
+
+# merge with velocity dataframe and only keep the melting season
+vel_runoff = left_join(veldf, runoff_interp, by="Date")
+vel_runoff = vel_runoff[vel_runoff$runoff > 200,]
+```
+
+```{r, eval=FALSE}
+## Read and process Air temperature data
+
+tskin = stack("data/t2m.2016.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.nc", varname = "t2mcorr")
+crs(tskin) = '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs '
+row1 = cbind(-Inf, 150, NA)
+row2 = cbind(320, +Inf, NA)
+tskin = reclassify(tskin, rbind(row1, row2), right=FALSE)
+names(tskin) = month.name
+
+# resample to lower resolution
+tskin_aggregate <- aggregate(tskin, fact=30)
+```
+
+```{r, eval=FALSE}
+## Convert to time series of air temperature at every location
+
+ts_tskin = matrix(data=NA, nrow=ncell(tskin_aggregate), ncol=12)
+for(i in 1:12){
+  ts_tskin[,i] = c(as.matrix(tskin_aggregate[[i]]))
+}
+
+ts_tskin = as.data.frame(t(ts_tskin))
+ts_tskin$Date = runoff_16$Date
+
+ts_tskin_res = matrix(data=NA, nrow=nrow(veldf), ncol=ncell(tskin_aggregate))
+ts_corr = vector()
+for(j in 1:ncell(tskin_aggregate)){
+  if (!all(is.na(ts_tskin[,j]))){
+     y = approx(ts_tskin$Date,ts_tskin[,j], xout = veldf$Date, 
+                rule = 1, method = "linear", ties = mean)$y
+    ts_tskin_res[,j] = y
+    ts_corr[j] = cor(y, veldf$V1, use = "complete.obs")
+  }
+  else{
+    ts_corr[j] = NA
+  }
+}
+
+ma_corr = matrix(ts_corr, nrow = nrow(tskin_aggregate), ncol = ncol(tskin_aggregate))
+corr_raster = raster(nrows=nrow(tskin_aggregate), ncols=ncol(tskin_aggregate))
+crs(corr_raster) <- crs(tskin_aggregate)
+extent(corr_raster) <- extent(tskin_aggregate)
+values(corr_raster) = ma_corr
+```
 
 # Results
 
@@ -79,19 +174,36 @@ Tables and figures (maps and other graphics) are carefully planned to convey the
 
 Show tables, plots, etc. and describe them.
 
-```{r, fig.width=6, fig.height=3, fig.cap="Map of completely random data"}
-m <- leaflet(data) %>% 
-  addTiles() %>% 
-  addCircleMarkers(~x, ~y, radius = ~size,color = ~as.factor(category)) %>% 
-  addPopups(~x[2], ~y[2], "Random popup")
-m  # a map with the default OSM tile layer
+```{r, message=F, warning=F, fig.width=6, fig.height=3, fig.cap="Exmaple map of surface ice velocity"}
+exam_vel = raster(names[1])
+leaflet() %>% 
+  addTiles(group = "OSM") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri World Imagery") %>%
+  addRasterImage(exam_vel, group = "Example velocity map") %>%
+  addCircleMarkers(data = spTransform(pts, "+proj=longlat +datum=WGS84 +no_defs"), group = "Selected points") %>%
+  setView(lng = -49.5, lat = 69.1, zoom = 8.5) %>%
+  addLayersControl(baseGroups = c("OSM", "Esri World Imagery"), 
+                   overlayGroups = c("Example velocity map", "Selected points"))
+```
+
+```{r, message=F, warning=F, fig.width=6, fig.height=3, fig.cap="Surface ice velocity time series in 2016"}
+ggplot(veldf) +
+  geom_point(aes(Date, V1)) +
+  theme_bw() +
+  labs(y = "Surface ice velocity at point 1 (m/year)")
+```
+
+```{r, message=F, warning=F, fig.width=6, fig.height=3, fig.cap="Comparison of surface ice velocity and runoff"}
+ggplot(vel_runoff, aes(x = log(runoff), y = V1)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  theme_bw() +
+  labs(x = "Runoff (mmwe/month, logscale)", y = "Surface ice velocity (m/year)")
 ```
 
 
-```{r}
-data %>% 
-  ggplot(aes(x=x,y=y,col=category))+
-  geom_point()
+```{r, eval=FALSE, message=F, warning=F, fig.width=6, fig.height=6, fig.cap="Correlation map of surface ice velocity at point 1 with air temperature"}
+plot(corr_raster)
 ```
 
 # Conclusions
