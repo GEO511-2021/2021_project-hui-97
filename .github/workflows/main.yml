@@ -25,6 +25,7 @@ jobs:
           BUILD_DIR: docs
           GH_PAT: ${{ secrets.GH_PAT }}
           BRANCH: gh-pages
+          EARTHDATA_TOKEN: ${{ secrets.EARTHDATA_TOKEN }}
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
