@@ -55,7 +55,7 @@ library(jsonlite)
 ```
 
 ## Download and clean all required data
-```{r, eval=FALSE}
+```{r, eval=F}
 ## Get and download the velocity Data frrom NSIDC
 
 # The data has been downloaded to the data directory, to use the api, use your EarthData_taken that can be acquired at https://nsidc.org/support/how/how-request-earthdata-login-token
@@ -77,7 +77,7 @@ dir.create(data_dir)
 unzip("data/nsidc0481_16.zip", exdir = data_dir)
 ```
 
-```{r, eval=False}
+```{r, eval=F}
 ## Clean velocity data and crop raster
 
 data_dir = "data/nsidc0481_16"
@@ -139,7 +139,7 @@ vel_runoff = left_join(veldf, runoff_interp, by="Date")
 vel_runoff = vel_runoff[vel_runoff$runoff > 200,]
 ```
 
-```{r, eval=FALSE}
+```{r, eval=F}
 ## Preprocess Air temperature data: resample to lower resolution and save
 
 tskin = stack("data/t2m.2016.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.nc", varname = "t2mcorr")
@@ -154,26 +154,25 @@ tskin_aggregate <- aggregate(tskin, fact=30)
 writeRaster(tskin_aggregate, filename="data/t2m.2016.BN_RACMO2.3p2.tif", options="INTERLEAVE=BAND", overwrite=TRUE)
 ```
 
-```{r, message=FALSE}
+```{r, message=F}
 ## Read Air temperature data into Rstudio
 tskin = stack("data/t2m.2016.BN_RACMO2.3p2.tif")
 names(tskin) = month.name
 ```
 
-```{r, message=FALSE}
+```{r, message=F}
 ## Convert to time series of air temperature at every location
-
-ts_tskin = matrix(data=NA, nrow=ncell(tskin_aggregate), ncol=12)
+ts_tskin = matrix(data=NA, nrow=ncell(tskin), ncol=12)
 for(i in 1:12){
-  ts_tskin[,i] = c(as.matrix(tskin_aggregate[[i]]))
+  ts_tskin[,i] = c(as.matrix(tskin[[i]]))
 }
 
 ts_tskin = as.data.frame(t(ts_tskin))
 ts_tskin$Date = runoff_16$Date
 
-ts_tskin_res = matrix(data=NA, nrow=nrow(veldf), ncol=ncell(tskin_aggregate))
+ts_tskin_res = matrix(data=NA, nrow=nrow(veldf), ncol=ncell(tskin))
 ts_corr = vector()
-for(j in 1:ncell(tskin_aggregate)){
+for(j in 1:ncell(tskin)){
   if (!all(is.na(ts_tskin[,j]))){
      y = approx(ts_tskin$Date,ts_tskin[,j], xout = veldf$Date, 
                 rule = 1, method = "linear", ties = mean)$y
@@ -185,10 +184,10 @@ for(j in 1:ncell(tskin_aggregate)){
   }
 }
 
-ma_corr = matrix(ts_corr, nrow = nrow(tskin_aggregate), ncol = ncol(tskin_aggregate))
-corr_raster = raster(nrows=nrow(tskin_aggregate), ncols=ncol(tskin_aggregate))
-crs(corr_raster) <- crs(tskin_aggregate)
-extent(corr_raster) <- extent(tskin_aggregate)
+ma_corr = matrix(ts_corr, nrow = nrow(tskin), ncol = ncol(tskin))
+corr_raster = raster(nrows=nrow(tskin), ncols=ncol(tskin))
+crs(corr_raster) <- crs(tskin)
+extent(corr_raster) <- extent(tskin)
 values(corr_raster) = ma_corr
 ```
 
