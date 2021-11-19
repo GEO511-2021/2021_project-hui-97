@@ -52,17 +52,18 @@ library(jsonlite)
 ```
 
 ## Download and clean all required data
-```{r, eval=FALSE}
+```{r, message=F}
 ## Get and download the velocity Data frrom NSIDC
 
 # The data has been downloaded to the data directory, to use the api, use your Your_EarthData_taken that can be aquired at https://nsidc.org/support/how/how-request-earthdata-login-token
+Your_EarthData_taken = Sys.getenv("EARTHDATA_TOKEN")
 url = paste0("https://n5eil02u.ecs.nsidc.org/egi/request?short_name=NSIDC-0481&token=",
              Your_EarthData_taken,
              "&email=yes&version=2&time=2016-01-01T00:00:00,2016-12-31T00:00:00&bounding_box=-52.5,68.8,-47.5,69.5&agent=NO&INCLUDE_META=N&page_size=200&page_num=1")
 data = GET(url)
 
 # Download and save data locally
-dir.create("data")
+# dir.create("data")
 file_vel = file(file.path("data", "nsidc0481_16.zip"), "wb") 
 writeBin(data$content, file_vel)
 close(file_vel)
