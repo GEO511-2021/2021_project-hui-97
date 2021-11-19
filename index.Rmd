@@ -55,7 +55,7 @@ library(jsonlite)
 ```{r, message=F}
 ## Get and download the velocity Data frrom NSIDC
 
-# The data has been downloaded to the data directory, to use the api, use your Your_EarthData_taken that can be aquired at https://nsidc.org/support/how/how-request-earthdata-login-token
+# The data has been downloaded to the data directory, to use the api, use your EarthData_taken that can be acquired at https://nsidc.org/support/how/how-request-earthdata-login-token
 EarthData_taken = Sys.getenv("EARTHDATA_TOKEN")
 url = paste0("https://n5eil02u.ecs.nsidc.org/egi/request?short_name=NSIDC-0481&token=",
              EarthData_taken,
