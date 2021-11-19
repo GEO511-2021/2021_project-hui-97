@@ -2,6 +2,9 @@
 title: "My Final Project First draft"
 author: Hui Gao
 subtitle: Subtitle here if desired
+output:
+  html_document:
+    code_folding: show
 ---
 
 # Introduction
@@ -52,7 +55,7 @@ library(jsonlite)
 ```
 
 ## Download and clean all required data
-```{r, message=F}
+```{r, eval=FALSE}
 ## Get and download the velocity Data frrom NSIDC
 
 # The data has been downloaded to the data directory, to use the api, use your EarthData_taken that can be acquired at https://nsidc.org/support/how/how-request-earthdata-login-token
@@ -63,7 +66,7 @@ url = paste0("https://n5eil02u.ecs.nsidc.org/egi/request?short_name=NSIDC-0481&t
 data = GET(url)
 
 # Download and save data locally
-# dir.create("data")
+dir.create("data")
 file_vel = file(file.path("data", "nsidc0481_16.zip"), "wb") 
 writeBin(data$content, file_vel)
 close(file_vel)
@@ -74,8 +77,8 @@ dir.create(data_dir)
 unzip("data/nsidc0481_16.zip", exdir = data_dir)
 ```
 
-```{r}
-## Clean velocity data and read them into Rstudio
+```{r, eval=False}
+## Clean velocity data and crop raster
 
 data_dir = "data/nsidc0481_16"
 names = dir(data_dir, pattern = "^.*vv.*$", full.names = TRUE, recursive = TRUE, ignore.case = TRUE)
@@ -83,9 +86,24 @@ names = gsub("^.*68.6.*$", "", names)
 names = names[names != ""]
 stack_velRaster = stack(names)
 
-# Set date as the Z dimension
+# Get dates
 date = substr(names, 41, 47)
 date = as.Date(format(as.POSIXct(date, format = '%d%b%Y'), "20%y-%m-%d"))
+write.csv(date,file="data/vel_Raster_date.csv",row.names=F)
+
+# Crop rasterstack
+new_extent = as(extent(-185000, -160000, -2290000, -2272000), 'SpatialPolygons')
+crs(new_extent) = crs(stack_velRaster)
+stack_velRaster = crop(stack_velRaster, new_extent)
+
+# Save the cropped rasterstack
+writeRaster(stack_velRaster, filename="data/stack_velRaster.tif", options="INTERLEAVE=BAND", overwrite=TRUE)
+```
+
+```{r, message=F, warning=F}
+## Read raster data into Rstudio
+stack_velRaster = stack("data/stack_velRaster.tif")
+date = as.Date(read.csv("data/vel_Raster_date.csv")$x)
 stack_velRaster = setZ(stack_velRaster, date)
 ```
 
@@ -122,7 +140,7 @@ vel_runoff = vel_runoff[vel_runoff$runoff > 200,]
 ```
 
 ```{r, eval=FALSE}
-## Read and process Air temperature data
+## Preprocess Air temperature data: resample to lower resolution and save
 
 tskin = stack("data/t2m.2016.BN_RACMO2.3p2_ERA5_3h_FGRN055.1km.MM.nc", varname = "t2mcorr")
 crs(tskin) = '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs '
@@ -133,9 +151,16 @@ names(tskin) = month.name
 
 # resample to lower resolution
 tskin_aggregate <- aggregate(tskin, fact=30)
+writeRaster(tskin_aggregate, filename="data/t2m.2016.BN_RACMO2.3p2.tif", options="INTERLEAVE=BAND", overwrite=TRUE)
 ```
 
-```{r, eval=FALSE}
+```{r, message=FALSE}
+## Read Air temperature data into Rstudio
+tskin = stack("data/t2m.2016.BN_RACMO2.3p2.tif")
+names(tskin) = month.name
+```
+
+```{r, message=FALSE}
 ## Convert to time series of air temperature at every location
 
 ts_tskin = matrix(data=NA, nrow=ncell(tskin_aggregate), ncol=12)
@@ -176,7 +201,7 @@ Tables and figures (maps and other graphics) are carefully planned to convey the
 Show tables, plots, etc. and describe them.
 
 ```{r, message=F, warning=F, fig.width=6, fig.height=3, fig.cap="Exmaple map of surface ice velocity"}
-exam_vel = raster(names[1])
+exam_vel = stack_velRaster[[1]]
 leaflet() %>% 
   addTiles(group = "OSM") %>%
   addProviderTiles("Esri.WorldImagery", group = "Esri World Imagery") %>%
@@ -203,7 +228,7 @@ ggplot(vel_runoff, aes(x = log(runoff), y = V1)) +
 ```
 
 
-```{r, eval=FALSE, message=F, warning=F, fig.width=6, fig.height=6, fig.cap="Correlation map of surface ice velocity at point 1 with air temperature"}
+```{r, message=F, warning=F, fig.width=6, fig.height=6, fig.cap="Correlation map of surface ice velocity at point 1 with air temperature"}
 plot(corr_raster)
 ```
 
