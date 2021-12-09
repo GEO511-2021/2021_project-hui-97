@@ -7,7 +7,7 @@ output:
     code_folding: show
 ---
 
-# Introduction
+# Introduction 
 
 Jakobshavn Isbrae, one of the largest tidewater glaciers in Greenland, has been exhibiting complex spatiotemporal behaviors. After ~20 years of acceleration, retreating, and thinning, it started to decelerate, readvance, and thicken beginning in 2016. The acceleration and retreat resumed in 2019. Understanding the driving mechanisms of these changes, especially the reversal in 2016, is essential to predict its future contribution to sea-level rise under different scenarios of climate change.
 
