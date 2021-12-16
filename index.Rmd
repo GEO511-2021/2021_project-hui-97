@@ -35,7 +35,7 @@ library(spData)
 library(ncdf4)
 library(readxl)
 library(stats)
-library(ggpubr)
+# library(ggpubr)
 library(lubridate)
 library(leaflet)
 library(httr)
@@ -202,7 +202,7 @@ ggplot(vel_runoff, aes(x = runoff, y = value)) +
   geom_point() +
   geom_smooth(method='lm') +
   facet_wrap(series ~ ., scales = "free") +
-  stat_cor(method = "pearson", label.x.npc = "left", label.y.npc = "top") +
+  # stat_cor(method = "pearson", label.x.npc = "left", label.y.npc = "top") +
   theme_bw() +
   labs(x = "Runoff (mm.w.e./month, logscale)", y = "Surface ice velocity (m/year)")
 ```
