@@ -207,7 +207,7 @@ ggplot(vel_runoff, aes(x = runoff, y = value)) +
   facet_wrap(series ~ ., scales = "free") +
   stat_cor(method = "pearson", label.x.npc = "left", label.y.npc = "top") +
   theme_bw() +
-  labs(x = "Runoff (mm.w.e./month, logscale)", y = "Surface ice velocity (m/year)")
+  labs(x = "Runoff (mm.w.e./month)", y = "Surface ice velocity (m/year)")
 ```
 
 ```{r, message=F, warning=F, fig.width=10, fig.height=6, fig.cap="Monthly mean meltwater runoff in 2016"}
