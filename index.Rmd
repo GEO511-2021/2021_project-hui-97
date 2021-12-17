@@ -35,7 +35,7 @@ library(spData)
 library(ncdf4)
 library(readxl)
 library(stats)
-# library(ggpubr)
+library(ggpubr)
 library(lubridate)
 library(leaflet)
 library(httr)
@@ -106,9 +106,9 @@ writeRaster(tskin_aggregate, filename="data/t2m.2016.BN_RACMO2.3p2.tif", options
 
 Now with raster files having the desired spatial resolution and extent, maps of the monthly averaged velocity, runoff, and air temperature are shown below. All three variables exhibit seasonality and high spatiotemporal variations. Time series of the surface ice velocity is extracted at 6 example locations near the terminus of the glacier. 
 
-## Surface ice velocity variation in Jakobshavn Isbrae
+## Surface ice velocity
 
-```{r, message=F, warning=F, fig.width=6, fig.height=4, fig.cap="Monthly mean surface ice velocity in 2016"}
+```{r, message=F, warning=F, fig.width=10, fig.height=6, fig.cap="Monthly mean surface ice velocity in 2016"}
 ## Read and visualize the velocity data 
 
 # Read raster data into Rstudio
@@ -162,7 +162,7 @@ leaflet() %>%
                    overlayGroups = c("Bedrock topography", "Example velocity map", "Selected points"))
 ```
 
-```{r, message=F, warning=F, fig.width=6, fig.height=6, fig.cap="Time series of the surface ice velocity at the 6 example locations"}
+```{r, message=F, warning=F, fig.width=8, fig.height=6, fig.cap="Time series of the surface ice velocity at the 6 example locations"}
 ## Plot the time series of the surface ice velocity
 
 veldf_plot <- melt(veldf ,  id.vars = 'Date', variable.name = 'series')
@@ -176,9 +176,9 @@ ggplot(veldf_plot) +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 ```
 
-## Meltwater runoff variation in the Jakobshavn Isbrae drainge basin
+## Meltwater runoff
 
-```{r, message=F, warning=F, fig.width=6, fig.height=6, fig.cap="Comparison of time series of surface ice velocity and total runoff in the ablation zone"}
+```{r, message=F, warning=F, fig.width=8, fig.height=6, fig.cap="Comparison of time series of surface ice velocity and total runoff in the ablation zone"}
 ## Read runoff data and resample to the index of velocity time series
 
 runoff = read_excel("data/runoff_sum_abl.xlsx")
@@ -202,12 +202,12 @@ ggplot(vel_runoff, aes(x = runoff, y = value)) +
   geom_point() +
   geom_smooth(method='lm') +
   facet_wrap(series ~ ., scales = "free") +
-  # stat_cor(method = "pearson", label.x.npc = "left", label.y.npc = "top") +
+  stat_cor(method = "pearson", label.x.npc = "left", label.y.npc = "top") +
   theme_bw() +
   labs(x = "Runoff (mm.w.e./month, logscale)", y = "Surface ice velocity (m/year)")
 ```
 
-```{r, message=F, warning=F, fig.width=6, fig.height=4, fig.cap="Monthly mean meltwater runoff in 2016"}
+```{r, message=F, warning=F, fig.width=10, fig.height=6, fig.cap="Monthly mean meltwater runoff in 2016"}
 ## Runoff in the study area
 runoff = stack("data/runoff_Jakobshavn_2016.nc")
 date_r = seq(as.Date("2016-01-01"),length=12,by="months")+14
@@ -229,9 +229,9 @@ gplot(runoffRaster) +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 ```
 
-## Air temperature on the Greenland ice sheet
+## 2m air temperature
 
-```{r, message=F, warning=F, fig.width=6, fig.height=7, fig.cap="Monthly mean air temperature at 2m above ice surface in 2016"}
+```{r, message=F, warning=F, fig.width=8, fig.height=9, fig.cap="Monthly mean air temperature at 2m above ice surface in 2016"}
 ## 2m air temperature on Greenland
 
 tskin = stack("data/t2m.2016.BN_RACMO2.3p2.tif")
@@ -254,7 +254,7 @@ In this study, I assume that runoff gets drained to the bed at the place of prod
 
 Correlations between the air temperature at 2 m above ice surface on the Greenland Ice Sheet and surface ice velocity time series at point 1 are shown in the figure below. The correlations are highest on the western and southeastern coast, and also high in southern Greenland. Areas showing good correlations likely have clear seasonal patterns in the air temperature. The spatial correlations patterns provide information for the driving atmospheric forcing of air temperature and glacier mass balance. Future work of comparison with North Atlantic Oscillation (NAO) and Greenland Blocking Index (GBI) is required to continue studying the links between individual tidewater glaciers and the climatic variations.
 
-```{r, message=F, warning=F, fig.width=6, fig.height=4, fig.cap="Correlation map of surface ice velocity and runoff in every pixel"}
+```{r, message=F, warning=F, fig.width=10, fig.height=6, fig.cap="Correlation map of surface ice velocity and runoff in every pixel"}
 ## Create correlation maps of surface ice velocity and runoff
 
 # Unfold the rasters of velocity and runoff to extract time series at every location
@@ -305,7 +305,7 @@ gplot(corr_raster) +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 ```
 
-```{r, message=F, warning=F, fig.width=6, fig.height=6, fig.cap="Correlation map of surface ice velocity at point 1 with air temperature"}
+```{r, message=F, warning=F, fig.width=8, fig.height=8, fig.cap="Correlation map of surface ice velocity at point 1 with air temperature"}
 ## Create correlation maps of surface ice velocity at point 1 with 2m air temperature
 
 # Convert to time series of air temperature at every location
