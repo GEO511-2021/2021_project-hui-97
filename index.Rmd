@@ -17,9 +17,12 @@ Since the industrial revolution, the acceleration of global warming has raised l
 # Data preparation
 
 Surface ice velocity, runoff, and air temperature at 2m above ice surface in Jakobshavn Isbrae in 2016 are collected from the following sources:
-* Surface ice velocity maps (GeoTIFFs) with 100m x 100m grids and sporadic temporal resolution from NSIDC: https://nsidc.org/data/nsidc-0481/versions/2
-* Monthly runoff and air temperature data (netCDF) at 1km x 1km grids are from RACMO2.3p2: https://www.projects.science.uu.nl/iceclimate/models/greenland.php
-* Drainage basin outline (shapefiles) from NASA: https://earth.gsfc.nasa.gov/cryo/data/polar-altimetry/antarctic-and-greenland-drainage-systems
+
+1. Surface ice velocity maps (GeoTIFFs) with 100m x 100m grids and sporadic temporal resolution from NSIDC: https://nsidc.org/data/nsidc-0481/versions/2
+
+2. Monthly runoff and air temperature data (netCDF) at 1km x 1km grids are from RACMO2.3p2: https://www.projects.science.uu.nl/iceclimate/models/greenland.php
+
+3. Drainage basin outline (shapefiles) from NASA: https://earth.gsfc.nasa.gov/cryo/data/polar-altimetry/antarctic-and-greenland-drainage-systems
 
 In this section, the original raster files are cropped to our study area and resampled to a lower resolution for the interest of this study. The code in this section is not evaluated but posted here for reference. Data after the processing in this section can be found in the data directory and will be used in the following analysis.
 
@@ -358,7 +361,10 @@ For future work, using daily meltwater runoff datasets would be helpful to under
 
 # References
 
-Joughin, I., Smith, B. E., Howat, I. M., Scambos, T., & Moon, T. (2010). Greenland flow variability from ice-sheet-wide velocity mapping. Journal of Glaciology, 56(197), 415–430. https://doi.org/10.3189/002214310792447734
-Morlighem, M., Williams, C. N., Rignot, E., An, L., Arndt, J. E., Bamber, J. L., et al. (2017). BedMachine v3: Complete Bed Topography and Ocean Bathymetry Mapping of Greenland From Multibeam Echo Sounding Combined With Mass Conservation. Geophysical Research Letters, 44(21), 11051–11061. https://doi.org/10.1002/2017GL074954
-Noel, B., van de Berg, W. J., Lhermitte, S., & van den Broeke, M. R. (2019). Rapid ablation zone expansion amplifies north Greenland mass loss. Science Advances, 5(9), eaaw0123. https://doi.org/10.1126/sciadv.aaw0123
-Zwally, H. Jay, Mario B. Giovinetto, Matthew A. Beckley, and Jack L. Saba, 2012, Antarctic and Greenland Drainage Systems, GSFC Cryospheric Sciences Laboratory, at http://icesat4.gsfc.nasa.gov/cryo_data/ant_grn_drainage_systems.php.
+* Joughin, I., Smith, B. E., Howat, I. M., Scambos, T., & Moon, T. (2010). Greenland flow variability from ice-sheet-wide velocity mapping. Journal of Glaciology, 56(197), 415–430. https://doi.org/10.3189/002214310792447734
+
+* Morlighem, M., Williams, C. N., Rignot, E., An, L., Arndt, J. E., Bamber, J. L., et al. (2017). BedMachine v3: Complete Bed Topography and Ocean Bathymetry Mapping of Greenland From Multibeam Echo Sounding Combined With Mass Conservation. Geophysical Research Letters, 44(21), 11051–11061. https://doi.org/10.1002/2017GL074954
+
+* Noel, B., van de Berg, W. J., Lhermitte, S., & van den Broeke, M. R. (2019). Rapid ablation zone expansion amplifies north Greenland mass loss. Science Advances, 5(9), eaaw0123. https://doi.org/10.1126/sciadv.aaw0123
+
+* Zwally, H. Jay, Mario B. Giovinetto, Matthew A. Beckley, and Jack L. Saba, 2012, Antarctic and Greenland Drainage Systems, GSFC Cryospheric Sciences Laboratory, at http://icesat4.gsfc.nasa.gov/cryo_data/ant_grn_drainage_systems.php.
