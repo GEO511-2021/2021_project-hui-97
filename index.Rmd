@@ -149,7 +149,7 @@ veldf = veldf %>%
 
 exam_vel = stack_velRaster[[1]]
 exmp_pts = spTransform(pts, "+proj=longlat +datum=WGS84 +no_defs")
-bed = raster("data/bed_Jak_egm08.tif")
+bed = raster("data/bed_Jakob_egm08.tif")
 leaflet() %>% 
   addTiles(group = "OSM") %>%
   addProviderTiles("Esri.WorldImagery", group = "Esri World Imagery") %>%
